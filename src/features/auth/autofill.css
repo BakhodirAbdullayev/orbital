@@ -1,0 +1,66 @@
+/* --- AVTOFILNI BEKOR QILISH UCHUN CUSTOM CSS --- */
+
+/* Barcha input turlari uchun */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  /* Sizning standart foningiz: bg-white/10 => rgba(255, 255, 255, 0.1) */
+  /* Fon rangini browserning box-shadow usuli bilan bekor qilamiz */
+  -webkit-box-shadow: inset 0 0 0px 1000px rgba(255, 255, 255, 0) !important;
+  box-shadow: inset 0 0 0px 1000px rgba(255, 255, 255, 0) !important;
+
+  /* Matn rangini bekor qilish: text-white/50 => rgba(255, 255, 255, 0.5) */
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+
+  /* Chegara rangini bekor qilish: border-white/50 => rgba(255, 255, 255, 0.5) */
+  border-color: rgba(255, 255, 255, 0.5) !important;
+
+  background-color: rgba(255, 255, 255, 0.1) !important;
+
+  /* Brauzerning avtomatik fon/rang o'zgarishi animatsiyasini "muzlatish" */
+  transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s,
+    border-color 5000s ease-in-out 0s, box-shadow 5000s ease-in-out 0s !important;
+}
+
+/* Input focus bo'lganda avtomatik to'ldirish stillarini bekor qilish */
+input:-webkit-autofill:focus-visible,
+input:-webkit-autofill:focus {
+  /* focus-visible:border-white => #ffffff */
+  border-color: #ffffff !important;
+
+  background-color: rgba(255, 255, 255, 1) !important;
+
+  /* focus-visible:text-white => #ffffff */
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+
+  /* focus-visible:placeholder:text-white => #ffffff */
+  &::placeholder {
+    /* Ba'zida autofill placeholderga ham ta'sir qiladi */
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Agar sizda dark mode uchun alohida sozlamalar bo'lsa, ularni ham moslashtiring */
+/* Misol: Agar dark mode uchun fon boshqacha bo'lsa */
+/*
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus {
+    -webkit-box-shadow: inset 0 0 0px 1000px YOUR_DARK_MODE_BG_COLOR_RGBA !important;
+    box-shadow: inset 0 0 0px 1000px YOUR_DARK_MODE_BG_COLOR_RGBA !important;
+    -webkit-text-fill-color: YOUR_DARK_MODE_TEXT_COLOR_RGBA !important;
+    color: YOUR_DARK_MODE_TEXT_COLOR_RGBA !important;
+    border-color: YOUR_DARK_MODE_BORDER_COLOR_RGBA !important;
+}
+
+.dark input:-webkit-autofill:focus-visible,
+.dark input:-webkit-autofill:focus {
+    border-color: YOUR_DARK_MODE_FOCUS_BORDER_COLOR_RGBA !important;
+    -webkit-text-fill-color: YOUR_DARK_MODE_FOCUS_TEXT_COLOR_RGBA !important;
+    color: YOUR_DARK_MODE_FOCUS_TEXT_COLOR_RGBA !important;
+}
+*/
