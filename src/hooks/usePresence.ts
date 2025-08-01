@@ -1,80 +1,89 @@
 // src/hooks/usePresence.ts
-import { useEffect } from "react";
+import { useEffect } from 'react';
 import {
   onValue,
   ref,
   set,
   onDisconnect,
   serverTimestamp as rtdbServerTimestamp,
-} from "firebase/database";
-import { auth, rtdb } from "@/config/firebase"; // firebase.js faylingizdan to'g'ri yo'lni kiriting
-import { onAuthStateChanged } from "firebase/auth";
+} from 'firebase/database';
+import {
+  doc,
+  updateDoc,
+  serverTimestamp as firestoreServerTimestamp,
+} from 'firebase/firestore';
+import { auth, rtdb, db } from '@/config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export const usePresence = () => {
   useEffect(() => {
-    let unsubscribeAuth: (() => void) | null = null;
-    let connectedRefUnsubscribe: (() => void) | null = null;
-
-    unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      // Har safar foydalanuvchi holati o'zgarganda (login/logout/qayta ulanish),
-      // avvalgi eshituvchilarni va onDisconnect sozlamalarini tozalash.
-      if (connectedRefUnsubscribe) {
-        connectedRefUnsubscribe();
-        connectedRefUnsubscribe = null;
-      }
-
+    let unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      // Foydalanuvchi holati o'zgarganda logikani bajarish
       if (user) {
+        // Firestore dagi foydalanuvchi holatiga bog'lanish
+        const userFirestoreRef = doc(db, 'users', user.uid);
+        // Realtime Database dagi foydalanuvchi holatiga bog'lanish
         const userStatusDatabaseRef = ref(rtdb, `/status/${user.uid}`);
-        const connectedRef = ref(rtdb, ".info/connected");
+        const connectedRef = ref(rtdb, '.info/connected');
 
-        // Oldingi onDisconnect operatsiyasini bekor qilish.
-        // Bu foydalanuvchi brauzerni yopmasdan qayta ulanganda toza holatni ta'minlaydi.
-        onDisconnect(userStatusDatabaseRef).cancel().catch(console.error);
+        // Foydalanuvchi onlayn bo'lganida ham Firestore'ni ham RTDB'ni yangilaymiz
+        const updateOnlineStatus = (onlineStatus: boolean) => {
+          // Firestore ni yangilash
+          updateDoc(userFirestoreRef, {
+            online: onlineStatus,
+            lastOnline: firestoreServerTimestamp(),
+          }).catch(console.error);
+
+          // RTDB ni yangilash
+          set(userStatusDatabaseRef, {
+            online: onlineStatus,
+            lastOnline: rtdbServerTimestamp(),
+          }).catch(console.error);
+        };
 
         // `.info/connected` ref'ga eshituvchi sozlash
-        connectedRefUnsubscribe = onValue(connectedRef, (snap) => {
+        const connectedUnsubscribe = onValue(connectedRef, (snap) => {
           if (snap.val() === true) {
-            // Foydalanuvchi hozirda Realtime Database'ga ulangan.
-            // 1. Ulanish uzilganda bajariladigan operatsiyani sozlash (foydalanuvchini oflayn belgilash).
+            // Agar ulanish o'rnatilgan bo'lsa
+            // Ulanish uzilganda Firestore va RTDB holatini yangilashni sozlash
             onDisconnect(userStatusDatabaseRef)
               .set({
                 online: false,
-                lastOnline: rtdbServerTimestamp(), // Server tomonidan belgilangan vaqt
+                lastOnline: rtdbServerTimestamp(),
               })
-              .catch(console.error); // Xatolarni qayd etish
+              .catch(console.error);
 
-            // 2. Foydalanuvchini hozirda onlayn deb belgilash.
-            set(userStatusDatabaseRef, {
-              online: true,
-              lastOnline: rtdbServerTimestamp(), // Onlayn bo'lgan vaqt
-            }).catch(console.error); // Xatolarni qayd etish
+            // Foydalanuvchini hozirda onlayn deb belgilash
+            updateOnlineStatus(true);
           } else {
-            // Foydalanuvchi RTDB'dan uzilgan. `onDisconnect` avtomatik tarzda holatni yangilaydi.
-            // Bu yerda qo'shimcha harakat kerak emas.
+            // Ulanish uzilganida onDisconnect avtomatik tarzda RTDB ni yangilaydi
+            // Ammo Firestore ni yangilash kerak
+            // Foydalanuvchi browserni yopganda bu blok ishlamasligi mumkin
+            // Shu sababli, faqat server vaqtini Firestore da ham ishlatish muhim
+            updateDoc(userFirestoreRef, {
+              online: false,
+              lastOnline: firestoreServerTimestamp(),
+            }).catch(console.error);
           }
         });
+
+        // onAuthStateChanged funksiyasi tugagach, eshituvchini tozalash funksiyasini qaytaring
+        return () => {
+          connectedUnsubscribe();
+          onDisconnect(userStatusDatabaseRef).cancel();
+        };
+      } else {
+        // Foydalanuvchi tizimdan chiqqanda, hech narsa qilmaymiz,
+        // chunki onDisconnect o'z ishini bajaradi.
+        // `return` funksiyasi ham ushbu holatni qamrab oladi.
       }
-      // Agar 'user' null bo'lsa (tizimdan chiqqan),
-      // yuqoridagi `if (user)` bloki ishga tushmaydi va tozalash return funksiyasida amalga oshadi.
     });
 
-    // Komponent o'chirilganda yoki effekt qayta ishga tushganda eshituvchilarni tozalash funksiyasi.
+    // Komponent o'chirilganda eshituvchilarni tozalash
     return () => {
       if (unsubscribeAuth) {
         unsubscribeAuth();
       }
-      if (connectedRefUnsubscribe) {
-        connectedRefUnsubscribe();
-      }
-      // Komponent o'chirilganda ham mavjud onDisconnect operatsiyasini bekor qilishni urinish
-      // Bu foydalanuvchi chiqib ketganda (masalan, sahifani yopganda) muhim.
-      if (auth.currentUser) {
-        const userStatusDatabaseRef = ref(
-          rtdb,
-          `/status/${auth.currentUser.uid}`
-        );
-        onDisconnect(userStatusDatabaseRef).cancel().catch(console.error);
-      }
     };
-  }, []); // Dependensiyalar massivi bo'sh, shu sababli effekt faqat bir marta komponent yuklanganda ishga tushadi.
+  }, []); // Dependensiyalar massivi bo'sh, shu sababli effekt faqat bir marta ishga tushadi
 };

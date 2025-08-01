@@ -1,14 +1,14 @@
 // src/features/chat/MyChatsPage.tsx
-import React, { useEffect, useState, useCallback } from "react";
-import { useChats } from "@/hooks/useChats";
-import { useAuth } from "@/contexts/AuthContext";
-import { ChatWindow } from "@/components/chat/ChatWindow";
-import { useNavigate, useParams } from "react-router"; // react-router-dom dan import qilish kerak
-import { sendMessage } from "@/lib/chatUtils";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/config/firebase";
-import type { UserProfile, Chat } from "@/lib/types";
-import { useUsers } from "@/hooks/useUsers";
+import React, { useEffect, useState, useCallback } from 'react';
+import { useChats } from '@/hooks/useChats';
+import { useAuth } from '@/contexts/AuthContext';
+import { ChatWindow } from '@/components/chat/ChatWindow';
+import { useNavigate, useParams } from 'react-router'; // react-router-dom dan import qilish kerak
+import { sendMessage } from '@/lib/chatUtils';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { db } from '@/config/firebase';
+import type { UserProfile, Chat } from '@/lib/types';
+import { useUsers } from '@/hooks/useUsers';
 
 const MyChatsPage: React.FC = () => {
   const { currentUser } = useAuth();
@@ -101,7 +101,7 @@ const MyChatsPage: React.FC = () => {
     async (content: string, receiverUid: string) => {
       if (!currentUser || !selectedUser) {
         console.error(
-          "Cannot create chat: currentUser or selectedUser is missing."
+          'Cannot create chat: currentUser or selectedUser is missing.'
         );
         return;
       }
@@ -115,7 +115,7 @@ const MyChatsPage: React.FC = () => {
           lastMessageTimestamp: Timestamp.now(),
           createdAt: Timestamp.now(),
         };
-        const docRef = await addDoc(collection(db, "chats"), newChatData);
+        const docRef = await addDoc(collection(db, 'chats'), newChatData);
         const createdChat: Chat = { id: docRef.id, ...newChatData };
         setSelectedChat(createdChat);
 
@@ -130,7 +130,7 @@ const MyChatsPage: React.FC = () => {
         setIsNewChatMode(false);
       } catch (error) {
         console.error(
-          "Error creating new chat and sending first message:",
+          'Error creating new chat and sending first message:',
           error
         );
         setSelectedChat(null);
@@ -149,14 +149,14 @@ const MyChatsPage: React.FC = () => {
       await sendMessage(currentUser.uid, selectedChat.id, receiverUid, content);
     } else {
       console.error(
-        "Cannot send message: currentUser is not logged in or no chat is selected."
+        'Cannot send message: currentUser is not logged in or no chat is selected.'
       );
     }
   };
 
   if (chatsLoading || usersLoading || isCreatingChat) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className='flex items-center justify-center h-screen'>
         Loading chat...
       </div>
     );
@@ -164,7 +164,7 @@ const MyChatsPage: React.FC = () => {
 
   if (chatsError || usersError) {
     return (
-      <div className="flex items-center justify-center h-screen text-red-500">
+      <div className='flex items-center justify-center h-screen text-red-500'>
         Error loading data: {chatsError?.message || usersError?.message}
       </div>
     );
@@ -183,7 +183,7 @@ const MyChatsPage: React.FC = () => {
           allUsersLoading={usersLoading} // <<<<< usersLoading ni prop sifatida uzatamiz
         />
       ) : (
-        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+        <div className='flex items-center justify-center h-full text-gray-500 dark:text-gray-400'>
           <p>
             Select a user from the left to start a conversation or view a chat.
           </p>

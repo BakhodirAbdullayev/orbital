@@ -1,12 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Send, Loader2, Smile } from "lucide-react";
-import type { UserProfile } from "@/lib/types";
+import React, { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Send, Loader2, Smile } from 'lucide-react';
+import type { UserProfile } from '@/lib/types';
 
-// import data from "@emoji-mart/data/sets/14/apple.json";
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
-import { useTheme } from "@/contexts/ThemeContext";
+import EmojiPicker from 'emoji-picker-react';
+import { Theme, EmojiStyle } from 'emoji-picker-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface MessageInputProps {
   onSendMessage: (content: string) => Promise<void>;
@@ -27,7 +26,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   isDisabled,
 }) => {
   const { theme } = useTheme();
-  const [inputContent, setInputContent] = useState("");
+  const [inputContent, setInputContent] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -38,7 +37,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   };
@@ -49,7 +48,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Faqat emoji picker yoki textarea ni bosmasdan tashqarida bosilganda yopish
       if (
         emojiPickerRef.current &&
         !emojiPickerRef.current.contains(event.target as Node) &&
@@ -60,11 +58,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [emojiPickerRef, textareaRef]);
+  }, []);
 
   const handleSend = async () => {
     if (!inputContent.trim() || isSending || isDisabled) return;
@@ -79,56 +77,52 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         await onSendMessage(inputContent);
       }
 
-      setInputContent("");
+      setInputContent('');
       setTimeout(() => adjustTextareaHeight(), 0);
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error('Failed to send message:', error);
     } finally {
       setIsSending(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  // 'onSelect' eventida keladigan ob'ektning turi.
-  // Agar kerak bo'lsa, bu yerda uni `any` deb belgilash mumkin
-  // yoki quyidagi kabi qat'iyroq tipdan foydalanish mumkin:
-  // type EmojiData = { native: string; /* ...boshqa prop'lar */ };
-  const onEmojiSelect = (emoji: { native: string }) => {
-    // Simple type for native property
-    setInputContent((prevContent) => prevContent + emoji.native);
+  const onEmojiClick = (emojiObject: { emoji: string }) => {
+    setInputContent((prevContent) => prevContent + emojiObject.emoji);
     textareaRef.current?.focus();
   };
 
   const sendButtonText = shouldShowStartChatButton
-    ? "Send First Message"
-    : "Send";
+    ? 'Send First Message'
+    : 'Send';
 
   const buttonDisabled = isDisabled || isSending || !inputContent.trim();
   const textareaDisabled = isDisabled || isSending;
+  const pickerTheme = theme === 'dark' ? Theme.DARK : Theme.LIGHT;
 
   return (
-    <div className="bg-background py-2 px-4 border-t dark:border-gray-700 flex items-end md:items-center flex-col md:flex-row relative">
-      <div className="flex flex-1 w-full items-end">
+    <div className='bg-background py-2 px-4 border-t dark:border-gray-700 flex items-end md:items-center flex-col md:flex-row relative'>
+      <div className='flex flex-1 w-full items-end'>
         <Button
-          variant="ghost"
-          size="icon"
+          variant='ghost'
+          size='icon'
           onClick={() => setShowEmojiPicker((prev) => !prev)}
           disabled={textareaDisabled}
-          className="mr-2"
+          className='mr-2'
         >
-          <Smile className="h-5 w-5" />
+          <Smile className='h-5 w-5' />
         </Button>
 
         <textarea
           ref={textareaRef}
-          placeholder="Write a message..."
-          className="flex-1 mr-2 p-2 resize-none overflow-hidden border-none outline-none text-sm/tight bg-transparent"
+          placeholder='Write a message...'
+          className='flex-1 mr-2 p-2 resize-none overflow-hidden border-none outline-none text-sm/tight bg-transparent'
           value={inputContent}
           onChange={(e) => {
             setInputContent(e.target.value);
@@ -141,15 +135,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         <Button
           onClick={handleSend}
           disabled={buttonDisabled}
-          className="ml-auto md:ml-0"
+          className='ml-auto md:ml-0'
         >
           {isSending ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
+            <Loader2 className='h-5 w-5 animate-spin' />
           ) : (
-            <Send className="h-5 w-5" />
+            <Send className='h-5 w-5' />
           )}
           {shouldShowStartChatButton && (
-            <span className="ml-2 hidden md:inline">{sendButtonText}</span>
+            <span className='ml-2 hidden md:inline'>{sendButtonText}</span>
           )}
         </Button>
       </div>
@@ -157,13 +151,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       {showEmojiPicker && (
         <div
           ref={emojiPickerRef}
-          className="absolute bottom-full left-0 mb-2 z-10"
+          className='absolute bottom-full left-0 mb-2 z-10'
         >
-          <Picker
-            data={data}
-            onEmojiSelect={onEmojiSelect}
-            theme={theme}
-            // set="apple"
+          <EmojiPicker
+            onEmojiClick={onEmojiClick}
+            theme={pickerTheme}
+            emojiStyle={EmojiStyle.NATIVE}
           />
         </div>
       )}
